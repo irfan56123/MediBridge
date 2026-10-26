@@ -1,9 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
 });
+
+console.log('API BASE URL:', api.defaults.baseURL);
 
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
@@ -21,10 +23,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('hms_token');
       localStorage.removeItem('hms_user');
+
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login';
       }
     }
+
     return Promise.reject(error);
   }
 );
