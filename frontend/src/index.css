@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — clinical, calm, precise. Not templated cream/terracotta. */
+  --color-ink: #0B2E33;
+  --color-paper: #F5F7F6;
+  --color-surface: #FFFFFF;
+  --color-brand: #146C6A;
+  --color-brand-dark: #0E4E4C;
+  --color-brand-light: #E4F2F1;
+  --color-accent: #E4572E;
+  --color-accent-light: #FDEAE3;
+  --color-stable: #2E8B57;
+  --color-stable-light: #E7F5EC;
+  --color-caution: #D9A404;
+  --color-caution-light: #FBF3DA;
+  --color-critical: #C13B3B;
+  --color-critical-light: #FBE9E9;
+  --color-border: #E2E8E7;
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+
+  ::selection {
+    background-color: var(--color-brand);
+    color: white;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 10px;
+  }
+}
+
+/* Signature element: ECG pulse divider, used once beneath the top header bar */
+@keyframes ecg-travel {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.ecg-pulse path {
+  stroke-dasharray: 1000;
+  animation: ecg-travel 3.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecg-pulse path {
+    animation: none;
+  }
+}
