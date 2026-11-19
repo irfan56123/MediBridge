@@ -21,6 +21,37 @@ export default function DoctorAvailabilityPage() {
   const [selectedDate, setSelectedDate] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const toEntries = (availability) => Object.entries(availability)
+    .map(([date, times]) => ({ date, available: true, ...times }));
+
+  const saveAvailability = async (availability = dateAvailability, durationValue = duration, showSuccess = true) => {
+    if (!profile) return false;
+    setSaving(true);
+    try {
+      const entries = toEntries(availability);
+      const res = await doctorApi.updateAvailability(profile._id, {
+        availability: profile.availability || [],
+        dateAvailability: entries,
+        slotDurationMinutes: Number(durationValue),
+      });
+      const savedProfile = res.data.data;
+      const savedDates = savedProfile.dateAvailability || [];
+      if (entries.length > 0 && savedDates.length === 0) {
+        throw new Error('The server did not save calendar availability. Deploy the latest backend and try again.');
+      }
+      setProfile(savedProfile);
+      setDuration(savedProfile.slotDurationMinutes || Number(durationValue));
+      setDateAvailability(Object.fromEntries(savedDates.filter((entry) => entry.available).map((entry) => [entry.date, { startTime: entry.startTime, endTime: entry.endTime }])));
+      if (showSuccess) toast.success('Availability calendar saved');
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update availability');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     doctorApi.getMyProfile().then((res) => {
       const doc = res.data.data;
@@ -38,33 +69,22 @@ export default function DoctorAvailabilityPage() {
   }, [month]);
 
   const toggleDate = (dateKey) => {
-    setDateAvailability((prev) => {
-      const next = { ...prev };
-      if (next[dateKey]) {
-        delete next[dateKey];
-        if (selectedDate === dateKey) setSelectedDate('');
-      } else {
-        next[dateKey] = { startTime: '09:00', endTime: '17:00' };
-        setSelectedDate(dateKey);
-      }
-      return next;
-    });
+    const next = { ...dateAvailability };
+    if (next[dateKey]) {
+      delete next[dateKey];
+      if (selectedDate === dateKey) setSelectedDate('');
+    } else {
+      next[dateKey] = { startTime: '09:00', endTime: '17:00' };
+      setSelectedDate(dateKey);
+    }
+    setDateAvailability(next);
+    void saveAvailability(next, duration, false);
   };
 
   const updateTime = (field, value) => setDateAvailability((prev) => ({ ...prev, [selectedDate]: { ...prev[selectedDate], [field]: value } }));
 
   const save = async () => {
-    setSaving(true);
-    try {
-      const entries = Object.entries(dateAvailability).map(([date, times]) => ({ date, available: true, ...times }));
-      await doctorApi.updateAvailability(profile._id, { availability: profile.availability || [], dateAvailability: entries, slotDurationMinutes: Number(duration) });
-      setProfile((prev) => ({ ...prev, dateAvailability: entries, slotDurationMinutes: Number(duration) }));
-      toast.success('Availability calendar saved');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update availability');
-    } finally {
-      setSaving(false);
-    }
+    await saveAvailability();
   };
 
   if (!profile) return <PageLoader />;
@@ -89,12 +109,12 @@ export default function DoctorAvailabilityPage() {
               const dateKey = keyFor(date);
               const available = !!dateAvailability[dateKey];
               const past = dateKey < todayKey;
-              return <button key={dateKey} type="button" disabled={past} onClick={() => toggleDate(dateKey)} className={`relative grid aspect-square place-items-center rounded-xl border text-sm font-semibold transition ${available ? 'border-brand bg-brand text-white shadow-sm' : 'border-border bg-white text-ink hover:border-brand/50 hover:bg-brand-light/40'} ${past ? 'cursor-not-allowed opacity-30' : ''}`} aria-pressed={available} aria-label={`${date.toDateString()}${available ? ', available' : ''}`}>
+              return <button key={dateKey} type="button" disabled={past || saving} onClick={() => toggleDate(dateKey)} className={`relative grid aspect-square place-items-center rounded-xl border text-sm font-semibold transition ${available ? 'border-brand bg-brand text-white shadow-sm' : 'border-border bg-white text-ink hover:border-brand/50 hover:bg-brand-light/40'} ${past || saving ? 'cursor-not-allowed opacity-30' : ''}`} aria-pressed={available} aria-label={`${date.toDateString()}${available ? ', available' : ''}`}>
                 {date.getDate()}{available && <Check size={12} className="absolute right-1 top-1" />}
               </button>;
             })}
           </div>
-          <div className="mt-4 flex items-center gap-2 text-xs text-ink/50"><span className="h-3 w-3 rounded bg-brand" /> Available for booking <span className="ml-3 h-3 w-3 rounded border border-border bg-white" /> Unavailable</div>
+          <div className="mt-4 flex items-center gap-2 text-xs text-ink/50"><span className="h-3 w-3 rounded bg-brand" /> Available for booking <span className="ml-3 h-3 w-3 rounded border border-border bg-white" /> Unavailable <span className="ml-2">Date selections save automatically.</span></div>
         </CardContent>
       </Card>
 
