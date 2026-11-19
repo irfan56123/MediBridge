@@ -9,31 +9,55 @@ const { ROLES } = require('../utils/constants');
 //          staff accounts are created by admin via userController)
 // @route   POST /api/auth/register
 // @access  Public
-const registerPatient = asyncHandler(async (req, res) => {
-  const { name, email, password, phone, gender, dateOfBirth } = req.body;
+const registerAccount = asyncHandler(async (req, res) => {
+  const { name, email, password, phone, gender, dateOfBirth, role } = req.body;
+  const requestedRole = role || ROLES.PATIENT;
 
-  const userExists = await User.findOne({ email });
+  if (!name?.trim() || !email?.trim() || !password) {
+    res.status(400);
+    throw new Error('Name, email and password are required');
+  }
+  if (password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters');
+  }
+  if (!Object.values(ROLES).includes(requestedRole)) {
+    res.status(400);
+    throw new Error('Please select a valid account type');
+  }
+  if (requestedRole === ROLES.ADMIN) {
+    res.status(403);
+    throw new Error('Admin accounts can only be created by an existing administrator');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
     res.status(400);
     throw new Error('An account with this email already exists');
   }
 
   const user = await User.create({
-    name,
-    email,
+    name: name.trim(),
+    email: normalizedEmail,
     password,
     phone,
     gender,
     dateOfBirth,
-    role: ROLES.PATIENT,
+    role: requestedRole,
+    // Every public registration must be approved by an administrator before login.
+    isActive: false,
   });
 
-  // Auto-create linked Patient profile
-  const patientProfile = await Patient.create({
-    user: user._id,
-  });
-  user.profileRef = patientProfile._id;
-  await user.save();
+  if (requestedRole === ROLES.PATIENT) {
+    const patientProfile = await Patient.create({ user: user._id });
+    user.profileRef = patientProfile._id;
+    await user.save();
+  } else if (requestedRole === ROLES.DOCTOR) {
+    const doctorProfile = await Doctor.create({ user: user._id });
+    user.profileRef = doctorProfile._id;
+    await user.save();
+  }
 
   res.status(201).json({
     success: true,
@@ -42,8 +66,9 @@ const registerPatient = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      token: generateToken(user._id, user.role),
+      isActive: user.isActive,
     },
+    message: 'Registration received. An administrator must approve your account before you can sign in.',
   });
 });
 
@@ -58,7 +83,7 @@ const login = asyncHandler(async (req, res) => {
     throw new Error('Please provide email and password');
   }
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email: email.trim().toLowerCase() }).select('+password');
 
   if (!user || !(await user.matchPassword(password))) {
     res.status(401);
@@ -67,7 +92,7 @@ const login = asyncHandler(async (req, res) => {
 
   if (!user.isActive) {
     res.status(403);
-    throw new Error('This account has been deactivated. Contact the administrator.');
+    throw new Error('This account is pending administrator approval or has been deactivated. Contact the administrator.');
   }
 
   user.lastLogin = new Date();
@@ -112,4 +137,4 @@ const changePassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-module.exports = { registerPatient, login, getMe, changePassword };
+module.exports = { registerAccount, login, getMe, changePassword };

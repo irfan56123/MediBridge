@@ -43,6 +43,8 @@ const appointmentSchema = new mongoose.Schema(
       enum: ['in_person', 'follow_up', 'emergency'],
       default: 'in_person',
     },
+    meetingUrl: { type: String, trim: true },
+    meetingCreatedAt: Date,
     notes: String, // doctor's private notes about the appointment
     cancelReason: String,
     bookedBy: {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Plus, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentApi, doctorApi } from '@/api/services';
 import { usePageTitle } from '@/context/PageTitleContext';
@@ -13,6 +14,8 @@ import { format } from 'date-fns';
 
 export default function PatientAppointmentsPage() {
   usePageTitle('My Appointments');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +32,15 @@ export default function PatientAppointmentsPage() {
   };
   useEffect(load, []);
   useEffect(() => { doctorApi.getAll().then((res) => setDoctors(res.data.data)); }, []);
+
+  useEffect(() => {
+    const doctorId = location.state?.doctorId;
+    if (doctorId && doctors.some((doctor) => doctor._id === doctorId)) {
+      setForm((current) => ({ ...current, doctorId }));
+      setModalOpen(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [doctors, location.pathname, location.state, navigate]);
 
   useEffect(() => {
     if (form.doctorId && form.date) {
@@ -82,6 +94,9 @@ export default function PatientAppointmentsPage() {
               { key: 'time', label: 'Time', render: (a) => a.startTime },
               { key: 'doctor', label: 'Doctor', render: (a) => `Dr. ${a.doctor?.user?.name}` },
               { key: 'status', label: 'Status', render: (a) => <Badge status={a.status} /> },
+              { key: 'meeting', label: 'Consultation', render: (a) => a.meetingUrl ? (
+                <a href={a.meetingUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"><Video size={15} /> Join meeting</a>
+              ) : a.status === 'pending' ? <span className="text-xs text-ink/45">Waiting for approval</span> : '—' },
               { key: 'actions', label: '', render: (a) => (
                 ['pending', 'confirmed'].includes(a.status) && <button onClick={() => cancel(a._id)} className="text-xs font-medium text-critical hover:underline">Cancel</button>
               ) },

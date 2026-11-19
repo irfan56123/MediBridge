@@ -1,8 +1,9 @@
 const dns = require("dns");
+const path = require('path');
 
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -10,8 +11,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
-
-connectDB();
 
 const app = express();
 
@@ -60,6 +59,17 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`HMS server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`HMS server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
+};
+
+startServer();

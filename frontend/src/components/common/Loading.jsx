@@ -20,11 +20,11 @@ export function PageLoader() {
 export function EmptyState({ title = 'Nothing here yet', description, icon: Icon = InboxIcon, action }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="rounded-2xl bg-paper p-4 text-ink/30">
+      <div className="rounded-2xl bg-brand-light p-4 text-brand/65 ring-1 ring-brand/10">
         <Icon size={32} />
       </div>
-      <h3 className="mt-4 font-display text-lg font-semibold text-ink">{title}</h3>
-      {description && <p className="mt-1 max-w-sm text-sm text-ink/50">{description}</p>}
+      <h3 className="mt-4 font-display text-lg font-bold text-ink">{title}</h3>
+      {description && <p className="mt-1 max-w-sm text-sm leading-6 text-ink/55">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

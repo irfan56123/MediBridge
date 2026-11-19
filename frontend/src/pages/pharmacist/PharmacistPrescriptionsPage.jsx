@@ -43,7 +43,7 @@ export default function PharmacistPrescriptionsPage() {
             { key: 'status', label: 'Status', render: (p) => <Badge status={p.status} /> },
             { key: 'date', label: 'Date', render: (p) => format(new Date(p.createdAt), 'MMM d, yyyy') },
             { key: 'actions', label: '', render: (p) => (
-              p.status === 'pending' && <Button size="sm" onClick={() => dispense(p._id)}>Dispense</Button>
+              ['approved', 'pending'].includes(p.status) && <Button size="sm" onClick={() => dispense(p._id)}>Dispense</Button>
             ) },
           ]}
         />

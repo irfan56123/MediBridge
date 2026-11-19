@@ -18,13 +18,13 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
       <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          'relative w-full rounded-2xl bg-surface shadow-xl max-h-[90vh] overflow-y-auto scrollbar-thin',
+          'relative w-full rounded-3xl border border-white/70 bg-surface shadow-2xl shadow-ink/15 max-h-[90vh] overflow-y-auto scrollbar-thin',
           sizes[size]
         )}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-surface z-10">
-          <h3 className="font-display text-lg font-semibold text-ink">{title}</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-ink/50 hover:bg-paper hover:text-ink">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/80 bg-white/95 px-6 py-5 backdrop-blur">
+          <h3 className="font-display text-lg font-bold text-ink">{title}</h3>
+          <button aria-label="Close dialog" onClick={onClose} className="rounded-xl p-2 text-ink/50 transition-colors hover:bg-paper hover:text-ink">
             <X size={18} />
           </button>
         </div>

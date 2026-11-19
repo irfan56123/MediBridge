@@ -11,8 +11,8 @@ export function Label({ className, children, ...props }) {
 export const Input = ({ className, error, ...props }) => (
   <input
     className={cn(
-      'w-full h-10 px-3 rounded-lg border bg-white text-sm text-ink placeholder:text-ink/40',
-      'focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors',
+      'w-full h-11 px-3 rounded-xl border bg-white text-sm text-ink placeholder:text-ink/40 shadow-sm shadow-ink/[0.02]',
+      'focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand transition-colors',
       error ? 'border-critical' : 'border-border',
       className
     )}
@@ -23,8 +23,8 @@ export const Input = ({ className, error, ...props }) => (
 export const Select = ({ className, children, error, ...props }) => (
   <select
     className={cn(
-      'w-full h-10 px-3 rounded-lg border bg-white text-sm text-ink',
-      'focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors',
+      'w-full h-11 px-3 rounded-xl border bg-white text-sm text-ink shadow-sm shadow-ink/[0.02]',
+      'focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand transition-colors',
       error ? 'border-critical' : 'border-border',
       className
     )}
@@ -37,8 +37,8 @@ export const Select = ({ className, children, error, ...props }) => (
 export const Textarea = ({ className, error, ...props }) => (
   <textarea
     className={cn(
-      'w-full px-3 py-2 rounded-lg border bg-white text-sm text-ink placeholder:text-ink/40',
-      'focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors',
+      'w-full px-3 py-2.5 rounded-xl border bg-white text-sm text-ink placeholder:text-ink/40 shadow-sm shadow-ink/[0.02]',
+      'focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand transition-colors',
       error ? 'border-critical' : 'border-border',
       className
     )}

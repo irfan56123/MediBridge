@@ -12,7 +12,7 @@ export default function EcgDivider({ className = '' }) {
         <path
           d="M0,10 L120,10 L135,10 L145,2 L155,18 L165,10 L180,10 L300,10 L315,10 L325,2 L335,18 L345,10 L360,10 L480,10 L495,10 L505,2 L515,18 L525,10 L600,10"
           fill="none"
-          stroke="#146C6A"
+          stroke="#087e8b"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"

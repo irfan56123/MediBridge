@@ -2,7 +2,7 @@ const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
-const { ROLES } = require('../utils/constants');
+const { ROLES, ALL_ROLES } = require('../utils/constants');
 
 // @desc    Admin creates a staff account (doctor, nurse, receptionist, pharmacist, lab_technician, accountant, admin)
 // @route   POST /api/users
@@ -10,18 +10,23 @@ const { ROLES } = require('../utils/constants');
 const createStaffUser = asyncHandler(async (req, res) => {
   const { name, email, password, role, phone, gender, dateOfBirth, ...roleSpecificFields } = req.body;
 
-  if (role === ROLES.PATIENT) {
+  if (!ALL_ROLES.includes(role) || role === ROLES.PATIENT) {
     res.status(400);
-    throw new Error('Patients should self-register via /api/auth/register');
+    throw new Error('Select a valid staff role. Patients should self-register.');
+  }
+  if (!name?.trim() || !email?.trim() || !password || password.length < 6) {
+    res.status(400);
+    throw new Error('Name, email and a password of at least 6 characters are required');
   }
 
-  const userExists = await User.findOne({ email });
+  const normalizedEmail = email.trim().toLowerCase();
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
     res.status(400);
     throw new Error('An account with this email already exists');
   }
 
-  const user = await User.create({ name, email, password, role, phone, gender, dateOfBirth });
+  const user = await User.create({ name: name.trim(), email: normalizedEmail, password, role, phone, gender, dateOfBirth });
 
   // Create a linked Doctor profile automatically for doctor accounts
   if (role === ROLES.DOCTOR) {

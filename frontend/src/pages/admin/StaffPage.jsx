@@ -10,7 +10,8 @@ import Modal from '@/components/ui/Modal';
 import DataTable from '@/components/common/DataTable';
 import { Input, Label, Select, FormField } from '@/components/ui/Input';
 
-const ROLES = ['admin', 'doctor', 'nurse', 'receptionist', 'pharmacist', 'lab_technician', 'accountant'];
+const STAFF_ROLES = ['admin', 'doctor', 'nurse', 'receptionist', 'pharmacist', 'lab_technician', 'accountant'];
+const ROLE_FILTERS = [...STAFF_ROLES, 'patient'];
 
 export default function StaffPage() {
   usePageTitle('Staff Management');
@@ -24,8 +25,8 @@ export default function StaffPage() {
 
   const load = () => {
     setLoading(true);
-    userApi.getAll(roleFilter ? { role: roleFilter } : {}).then((res) => {
-      setUsers(res.data.data);
+    userApi.getAll({ ...(roleFilter ? { role: roleFilter } : {}), limit: 1000 }).then((res) => {
+      setUsers([...res.data.data].sort((a, b) => Number(a.isActive) - Number(b.isActive)));
       setLoading(false);
     });
   };
@@ -62,12 +63,15 @@ export default function StaffPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-48">
-          <option value="">All roles</option>
-          {ROLES.map((r) => (
-            <option key={r} value={r}>{r.replace('_', ' ')}</option>
-          ))}
-        </Select>
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-48">
+            <option value="">All roles</option>
+            {ROLE_FILTERS.map((r) => (
+              <option key={r} value={r}>{r.replace('_', ' ')}</option>
+            ))}
+          </Select>
+          {!!users.filter((user) => !user.isActive).length && <Badge variant="caution">{users.filter((user) => !user.isActive).length} awaiting approval</Badge>}
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Add Staff
         </Button>
@@ -84,13 +88,15 @@ export default function StaffPage() {
               { key: 'email', label: 'Email' },
               { key: 'role', label: 'Role', render: (r) => <Badge status={r.role} variant="brand">{r.role.replace('_', ' ')}</Badge> },
               { key: 'phone', label: 'Phone', render: (r) => r.phone || '—' },
-              { key: 'isActive', label: 'Status', render: (r) => <Badge variant={r.isActive ? 'stable' : 'critical'}>{r.isActive ? 'Active' : 'Inactive'}</Badge> },
+              { key: 'gender', label: 'Gender', render: (r) => r.gender || '—' },
+              { key: 'dateOfBirth', label: 'Date of birth', render: (r) => r.dateOfBirth ? new Date(r.dateOfBirth).toLocaleDateString() : '—' },
+              { key: 'isActive', label: 'Status', render: (r) => <Badge variant={r.isActive ? 'stable' : 'critical'}>{r.isActive ? 'Active' : 'Pending / inactive'}</Badge> },
               {
                 key: 'actions',
                 label: '',
                 render: (r) => (
                   <button onClick={() => toggleActive(r._id)} className="text-xs font-medium text-brand hover:underline">
-                    {r.isActive ? 'Deactivate' : 'Activate'}
+                    {r.isActive ? 'Deactivate' : 'Approve / activate'}
                   </button>
                 ),
               },
@@ -113,7 +119,7 @@ export default function StaffPage() {
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Role">
               <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-                {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                {STAFF_ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
               </Select>
             </FormField>
             <FormField label="Phone">

@@ -28,6 +28,8 @@ const statusMap = {
   requested: 'caution',
   sample_collected: 'brand',
   dispensed: 'stable',
+  approved: 'stable',
+  partially_dispensed: 'caution',
 };
 
 export default function Badge({ children, variant, status, className }) {
@@ -36,7 +38,7 @@ export default function Badge({ children, variant, status, className }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border capitalize',
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border capitalize tracking-wide',
         styles[resolved],
         className
       )}

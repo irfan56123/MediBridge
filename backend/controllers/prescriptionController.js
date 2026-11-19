@@ -3,6 +3,7 @@ const Prescription = require('../models/Prescription');
 const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
 const Medicine = require('../models/Medicine');
+let legacyPendingPrescriptionsPromoted = false;
 
 // @desc    Create a prescription
 // @route   POST /api/prescriptions
@@ -13,7 +14,9 @@ const createPrescription = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error('Only doctors can write prescriptions');
   }
-  const prescription = await Prescription.create({ ...req.body, doctor: doctor._id });
+  // Writing a prescription is the doctor's approval; it goes straight to the pharmacy queue.
+  const { status: _ignoredStatus, dispensedBy: _ignoredDispensedBy, dispensedAt: _ignoredDispensedAt, ...prescriptionData } = req.body;
+  const prescription = await Prescription.create({ ...prescriptionData, doctor: doctor._id, status: 'approved' });
   res.status(201).json({ success: true, data: prescription });
 });
 
@@ -21,6 +24,12 @@ const createPrescription = asyncHandler(async (req, res) => {
 // @route   GET /api/prescriptions
 // @access  Private
 const getPrescriptions = asyncHandler(async (req, res) => {
+  // Existing prescriptions were already written by a doctor; promote records
+  // created before auto-approval was added so they reach the dispense queue too.
+  if (!legacyPendingPrescriptionsPromoted) {
+    await Prescription.updateMany({ status: 'pending' }, { $set: { status: 'approved' } });
+    legacyPendingPrescriptionsPromoted = true;
+  }
   const filter = {};
 
   if (req.user.role === 'patient') {
@@ -68,6 +77,10 @@ const dispensePrescription = asyncHandler(async (req, res) => {
   if (prescription.status === 'dispensed') {
     res.status(400);
     throw new Error('Prescription already dispensed');
+  }
+  if (!['approved', 'pending', 'partially_dispensed'].includes(prescription.status)) {
+    res.status(400);
+    throw new Error('This prescription is not ready to dispense');
   }
 
   // Deduct stock for each medicine, where a catalog link exists

@@ -53,11 +53,13 @@ hms-project/
 ```bash
 cd backend
 npm install
-cp .env.example .env
-# Edit .env — set MONGO_URI and JWT_SECRET at minimum
+copy .env.example .env
+# Edit .env — set MONGO_URI and JWT_SECRET at minimum (PowerShell)
 npm run seed     # populates demo data & accounts for all 8 roles
 npm run dev      # starts on http://localhost:5000
 ```
+
+Make sure MongoDB is running locally, or replace `MONGO_URI` in `backend/.env` with your MongoDB Atlas connection string.
 
 ### 2. Frontend
 

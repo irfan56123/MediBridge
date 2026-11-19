@@ -1,11 +1,11 @@
 import { cn } from '@/lib/utils';
 
 const variants = {
-  primary: 'bg-brand text-white hover:bg-brand-dark shadow-sm',
-  accent: 'bg-accent text-white hover:opacity-90 shadow-sm',
-  outline: 'border border-border bg-white text-ink hover:bg-paper',
-  ghost: 'text-ink hover:bg-paper',
-  danger: 'bg-critical text-white hover:opacity-90',
+  primary: 'bg-brand text-white hover:bg-brand-dark shadow-sm shadow-brand/15',
+  accent: 'bg-accent text-white hover:brightness-95 shadow-sm',
+  outline: 'border border-border bg-white text-ink hover:border-brand/30 hover:bg-brand-light/50',
+  ghost: 'text-ink hover:bg-brand-light/70',
+  danger: 'bg-critical text-white hover:brightness-95',
 };
 
 const sizes = {
@@ -29,8 +29,8 @@ export default function Button({
       type={type}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150',
-        'disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-[-0.01em] transition-all duration-150',
+        'focus-visible:ring-4 focus-visible:ring-brand/15 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]',
         variants[variant],
         sizes[size],
         className

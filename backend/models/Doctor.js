@@ -13,6 +13,16 @@ const availabilitySlotSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const dateAvailabilitySchema = new mongoose.Schema(
+  {
+    date: { type: String, required: true }, // YYYY-MM-DD, kept as a date-only value
+    available: { type: Boolean, default: true },
+    startTime: { type: String, default: '09:00' },
+    endTime: { type: String, default: '17:00' },
+  },
+  { _id: false }
+);
+
 const doctorSchema = new mongoose.Schema(
   {
     user: {
@@ -44,6 +54,8 @@ const doctorSchema = new mongoose.Schema(
     },
     bio: String,
     availability: [availabilitySlotSchema],
+    dateAvailability: { type: [dateAvailabilitySchema], default: [] },
+    dateAvailabilityConfigured: { type: Boolean, default: false },
     slotDurationMinutes: {
       type: Number,
       default: 30,

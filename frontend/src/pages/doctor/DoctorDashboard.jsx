@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { CalendarDays, Users, Clock, CheckCircle2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { dashboardApi } from '@/api/services';
 import { usePageTitle } from '@/context/PageTitleContext';
 import StatCard from '@/components/common/StatCard';
@@ -10,12 +13,42 @@ import Badge from '@/components/ui/Badge';
 export default function DoctorDashboard() {
   usePageTitle('Doctor Dashboard');
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    dashboardApi.getDoctor().then((res) => setData(res.data.data));
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await dashboardApi.getDoctor();
+      setData(res.data.data);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Could not load your dashboard. Please try again.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (!data) return <PageLoader />;
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  if (loading && !data) return <PageLoader />;
+  if (error && !data) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+        <p className="font-semibold text-red-800">{error}</p>
+        <button type="button" onClick={loadDashboard} className="mt-3 text-sm font-semibold text-red-800 underline">
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const appointments = data.todayAppointments.length > 0
+    ? data.todayAppointments
+    : data.upcomingAppointments || [];
+  const scheduleTitle = data.todayAppointments.length > 0 ? "Today's Schedule" : 'Upcoming Appointments';
 
   return (
     <div className="space-y-6">
@@ -27,13 +60,17 @@ export default function DoctorDashboard() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Today's Schedule</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{scheduleTitle}</CardTitle></CardHeader>
         <CardContent>
-          {data.todayAppointments.length === 0 ? (
-            <EmptyState title="No appointments today" description="Enjoy the quiet — check back once patients book in." />
+          {appointments.length === 0 ? (
+            <EmptyState
+              title="No upcoming appointments"
+              description="New bookings will appear here. Review your full appointment list or update your availability."
+              action={<Link to="/doctor/appointments" className="text-sm font-semibold text-brand hover:underline">View appointments</Link>}
+            />
           ) : (
             <div className="divide-y divide-border">
-              {data.todayAppointments.map((a) => (
+              {appointments.map((a) => (
                 <div key={a._id} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-full bg-brand-light flex items-center justify-center font-display font-semibold text-brand-dark text-sm">
@@ -45,7 +82,9 @@ export default function DoctorDashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm text-ink/60">{a.startTime}</span>
+                    <span className="font-mono text-sm text-ink/60">
+                      {data.todayAppointments.length === 0 && `${format(new Date(a.date), 'MMM d')} · `}{a.startTime}
+                    </span>
                     <Badge status={a.status} />
                   </div>
                 </div>

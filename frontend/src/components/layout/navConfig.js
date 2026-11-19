@@ -10,6 +10,7 @@ import {
   Receipt,
   Building2,
   UserCircle,
+  Contact,
   ClipboardList,
   HeartPulse,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ export const navConfig = {
     { label: 'Dashboard', to: '/doctor', icon: LayoutDashboard },
     { label: 'Appointments', to: '/doctor/appointments', icon: CalendarDays },
     { label: 'My Patients', to: '/doctor/patients', icon: UserCircle },
+    { label: 'My Profile', to: '/doctor/profile', icon: Contact },
     { label: 'Prescriptions', to: '/doctor/prescriptions', icon: FileText },
     { label: 'Lab Requests', to: '/doctor/lab', icon: FlaskConical },
     { label: 'Availability', to: '/doctor/availability', icon: ClipboardList },
@@ -60,6 +62,7 @@ export const navConfig = {
   ],
   patient: [
     { label: 'Dashboard', to: '/patient', icon: LayoutDashboard },
+    { label: 'Find a Doctor', to: '/patient/doctors', icon: Stethoscope },
     { label: 'Appointments', to: '/patient/appointments', icon: CalendarDays },
     { label: 'Medical History', to: '/patient/history', icon: FileText },
     { label: 'Prescriptions', to: '/patient/prescriptions', icon: Pill },

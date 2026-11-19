@@ -1,5 +1,22 @@
 const asyncHandler = require('express-async-handler');
 const Patient = require('../models/Patient');
+const User = require('../models/User');
+
+const getOrCreatePatientProfile = async (user) => {
+  let patient = await Patient.findOne({ user: user._id });
+  if (patient) return patient;
+  try {
+    patient = await Patient.create({ user: user._id });
+  } catch (error) {
+    if (error.code !== 11000) throw error;
+    patient = await Patient.findOne({ user: user._id });
+  }
+  if (patient && String(user.profileRef || '') !== String(patient._id)) {
+    user.profileRef = patient._id;
+    await user.save({ validateBeforeSave: false });
+  }
+  return patient;
+};
 
 // @desc    Get all patients (staff use - search, list)
 // @route   GET /api/patients
@@ -8,15 +25,19 @@ const getPatients = asyncHandler(async (req, res) => {
   const filter = {};
   if (req.query.assignedDoctor) filter.assignedDoctor = req.query.assignedDoctor;
   if (req.query.isAdmitted !== undefined) filter.isAdmitted = req.query.isAdmitted === 'true';
+  if (req.user.role !== 'admin') {
+    const activePatientIds = await User.find({ role: 'patient', isActive: true }).distinct('_id');
+    filter.user = { $in: activePatientIds };
+  }
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
 
-  let query = Patient.find(filter).populate('user', 'name email phone avatar gender dateOfBirth');
+  let query = Patient.find(filter).populate('user', 'name email phone avatar gender dateOfBirth isActive role');
 
   if (req.query.search) {
     // Search by populated user name/email requires a different approach; simplest: fetch then filter
-    const all = await Patient.find(filter).populate('user', 'name email phone avatar gender dateOfBirth');
+    const all = await Patient.find(filter).populate('user', 'name email phone avatar gender dateOfBirth isActive role');
     const filtered = all.filter(
       (p) =>
         p.user &&
@@ -55,7 +76,7 @@ const getPatientById = asyncHandler(async (req, res) => {
 // @route   GET /api/patients/me/profile
 // @access  Private/Patient
 const getMyPatientProfile = asyncHandler(async (req, res) => {
-  const patient = await Patient.findOne({ user: req.user._id })
+  const patient = await getOrCreatePatientProfile(req.user)
     .populate('user', 'name email phone avatar gender dateOfBirth address')
     .populate({ path: 'assignedDoctor', populate: { path: 'user', select: 'name' } });
   if (!patient) {

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -5,51 +6,53 @@ import ProtectedRoute from '@/routes/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PageLoader } from '@/components/common/Loading';
 
-import LoginPage from '@/pages/auth/LoginPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import StaffPage from '@/pages/admin/StaffPage';
-import DepartmentsPage from '@/pages/admin/DepartmentsPage';
-import AdminDoctorsPage from '@/pages/admin/AdminDoctorsPage';
-import AdminPatientsPage from '@/pages/admin/AdminPatientsPage';
-import AdminAppointmentsPage from '@/pages/admin/AdminAppointmentsPage';
-import AdminWardsPage from '@/pages/admin/AdminWardsPage';
-import AdminPharmacyPage from '@/pages/admin/AdminPharmacyPage';
-import AdminBillingPage from '@/pages/admin/AdminBillingPage';
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const StaffPage = lazy(() => import('@/pages/admin/StaffPage'));
+const DepartmentsPage = lazy(() => import('@/pages/admin/DepartmentsPage'));
+const AdminDoctorsPage = lazy(() => import('@/pages/admin/AdminDoctorsPage'));
+const AdminPatientsPage = lazy(() => import('@/pages/admin/AdminPatientsPage'));
+const AdminAppointmentsPage = lazy(() => import('@/pages/admin/AdminAppointmentsPage'));
+const AdminWardsPage = lazy(() => import('@/pages/admin/AdminWardsPage'));
+const AdminPharmacyPage = lazy(() => import('@/pages/admin/AdminPharmacyPage'));
+const AdminBillingPage = lazy(() => import('@/pages/admin/AdminBillingPage'));
 
-import DoctorDashboard from '@/pages/doctor/DoctorDashboard';
-import DoctorAppointmentsPage from '@/pages/doctor/DoctorAppointmentsPage';
-import DoctorPatientsPage from '@/pages/doctor/DoctorPatientsPage';
-import DoctorPrescriptionsPage from '@/pages/doctor/DoctorPrescriptionsPage';
-import DoctorLabPage from '@/pages/doctor/DoctorLabPage';
-import DoctorAvailabilityPage from '@/pages/doctor/DoctorAvailabilityPage';
+const DoctorDashboard = lazy(() => import('@/pages/doctor/DoctorDashboard'));
+const DoctorAppointmentsPage = lazy(() => import('@/pages/doctor/DoctorAppointmentsPage'));
+const DoctorPatientsPage = lazy(() => import('@/pages/doctor/DoctorPatientsPage'));
+const DoctorPrescriptionsPage = lazy(() => import('@/pages/doctor/DoctorPrescriptionsPage'));
+const DoctorLabPage = lazy(() => import('@/pages/doctor/DoctorLabPage'));
+const DoctorAvailabilityPage = lazy(() => import('@/pages/doctor/DoctorAvailabilityPage'));
+const DoctorProfilePage = lazy(() => import('@/pages/doctor/DoctorProfilePage'));
 
-import NurseDashboard from '@/pages/nurse/NurseDashboard';
-import NurseWardsPage from '@/pages/nurse/NurseWardsPage';
-import NursePatientsPage from '@/pages/nurse/NursePatientsPage';
+const NurseDashboard = lazy(() => import('@/pages/nurse/NurseDashboard'));
+const NurseWardsPage = lazy(() => import('@/pages/nurse/NurseWardsPage'));
+const NursePatientsPage = lazy(() => import('@/pages/nurse/NursePatientsPage'));
 
-import ReceptionistDashboard from '@/pages/receptionist/ReceptionistDashboard';
-import ReceptionistAppointmentsPage from '@/pages/receptionist/ReceptionistAppointmentsPage';
-import ReceptionistPatientsPage from '@/pages/receptionist/ReceptionistPatientsPage';
-import ReceptionistDoctorsPage from '@/pages/receptionist/ReceptionistDoctorsPage';
+const ReceptionistDashboard = lazy(() => import('@/pages/receptionist/ReceptionistDashboard'));
+const ReceptionistAppointmentsPage = lazy(() => import('@/pages/receptionist/ReceptionistAppointmentsPage'));
+const ReceptionistPatientsPage = lazy(() => import('@/pages/receptionist/ReceptionistPatientsPage'));
+const ReceptionistDoctorsPage = lazy(() => import('@/pages/receptionist/ReceptionistDoctorsPage'));
 
-import PharmacistDashboard from '@/pages/pharmacist/PharmacistDashboard';
-import PharmacistInventoryPage from '@/pages/pharmacist/PharmacistInventoryPage';
-import PharmacistPrescriptionsPage from '@/pages/pharmacist/PharmacistPrescriptionsPage';
+const PharmacistDashboard = lazy(() => import('@/pages/pharmacist/PharmacistDashboard'));
+const PharmacistInventoryPage = lazy(() => import('@/pages/pharmacist/PharmacistInventoryPage'));
+const PharmacistPrescriptionsPage = lazy(() => import('@/pages/pharmacist/PharmacistPrescriptionsPage'));
 
-import LabDashboard from '@/pages/lab/LabDashboard';
-import LabTestsPage from '@/pages/lab/LabTestsPage';
+const LabDashboard = lazy(() => import('@/pages/lab/LabDashboard'));
+const LabTestsPage = lazy(() => import('@/pages/lab/LabTestsPage'));
 
-import AccountantDashboard from '@/pages/accountant/AccountantDashboard';
-import AccountantInvoicesPage from '@/pages/accountant/AccountantInvoicesPage';
+const AccountantDashboard = lazy(() => import('@/pages/accountant/AccountantDashboard'));
+const AccountantInvoicesPage = lazy(() => import('@/pages/accountant/AccountantInvoicesPage'));
 
-import PatientDashboard from '@/pages/patient/PatientDashboard';
-import PatientAppointmentsPage from '@/pages/patient/PatientAppointmentsPage';
-import PatientHistoryPage from '@/pages/patient/PatientHistoryPage';
-import PatientPrescriptionsPage from '@/pages/patient/PatientPrescriptionsPage';
-import PatientLabPage from '@/pages/patient/PatientLabPage';
-import PatientBillingPage from '@/pages/patient/PatientBillingPage';
+const PatientDashboard = lazy(() => import('@/pages/patient/PatientDashboard'));
+const PatientAppointmentsPage = lazy(() => import('@/pages/patient/PatientAppointmentsPage'));
+const PatientHistoryPage = lazy(() => import('@/pages/patient/PatientHistoryPage'));
+const PatientPrescriptionsPage = lazy(() => import('@/pages/patient/PatientPrescriptionsPage'));
+const PatientLabPage = lazy(() => import('@/pages/patient/PatientLabPage'));
+const PatientBillingPage = lazy(() => import('@/pages/patient/PatientBillingPage'));
+const PatientDoctorsPage = lazy(() => import('@/pages/patient/PatientDoctorsPage'));
 
 const roleHome = {
   admin: '/admin',
@@ -74,6 +77,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Toaster position="top-right" toastOptions={{ style: { fontFamily: 'Inter, sans-serif' } }} />
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -98,6 +102,7 @@ export default function App() {
               <Route path="/doctor" element={<DoctorDashboard />} />
               <Route path="/doctor/appointments" element={<DoctorAppointmentsPage />} />
               <Route path="/doctor/patients" element={<DoctorPatientsPage />} />
+              <Route path="/doctor/profile" element={<DoctorProfilePage />} />
               <Route path="/doctor/prescriptions" element={<DoctorPrescriptionsPage />} />
               <Route path="/doctor/lab" element={<DoctorLabPage />} />
               <Route path="/doctor/availability" element={<DoctorAvailabilityPage />} />
@@ -146,6 +151,7 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={['patient']} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/patient" element={<PatientDashboard />} />
+              <Route path="/patient/doctors" element={<PatientDoctorsPage />} />
               <Route path="/patient/appointments" element={<PatientAppointmentsPage />} />
               <Route path="/patient/history" element={<PatientHistoryPage />} />
               <Route path="/patient/prescriptions" element={<PatientPrescriptionsPage />} />
@@ -156,6 +162,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );

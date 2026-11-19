@@ -3,10 +3,19 @@ import { authApi } from '@/api/services';
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+const readStoredUser = () => {
+  try {
     const stored = localStorage.getItem('hms_user');
     return stored ? JSON.parse(stored) : null;
+  } catch {
+    localStorage.removeItem('hms_user');
+    return null;
+  }
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(() => {
+    return readStoredUser();
   });
   const [loading, setLoading] = useState(true);
 
@@ -43,9 +52,11 @@ export const AuthProvider = ({ children }) => {
   const register = async (payload) => {
     const res = await authApi.register(payload);
     const data = res.data.data;
-    localStorage.setItem('hms_token', data.token);
-    localStorage.setItem('hms_user', JSON.stringify(data));
-    setUser(data);
+    if (data.token) {
+      localStorage.setItem('hms_token', data.token);
+      localStorage.setItem('hms_user', JSON.stringify(data));
+      setUser(data);
+    }
     return data;
   };
 

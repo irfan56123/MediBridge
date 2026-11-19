@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentApi, medicalRecordApi } from '@/api/services';
 import { usePageTitle } from '@/context/PageTitleContext';
@@ -80,6 +81,9 @@ export default function DoctorAppointmentsPage() {
               { key: 'time', label: 'Time', render: (a) => a.startTime },
               { key: 'patient', label: 'Patient', render: (a) => a.patient?.user?.name },
               { key: 'reason', label: 'Reason', render: (a) => a.reason || '—' },
+              { key: 'meeting', label: 'Consultation', render: (a) => a.meetingUrl ? (
+                <a href={a.meetingUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"><Video size={15} /> Join meeting</a>
+              ) : a.status === 'pending' ? <span className="text-xs text-ink/45">Available after approval</span> : '—' },
               { key: 'status', label: 'Status', render: (a) => (
                 <Select
                   value={a.status}

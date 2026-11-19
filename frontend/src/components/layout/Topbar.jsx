@@ -1,38 +1,31 @@
-import { Search, Bell } from 'lucide-react';
-import EcgDivider from './EcgDivider';
+import { CalendarDays, Menu } from 'lucide-react';
 import { roleLabels } from './navConfig';
 import { useAuth } from '@/context/AuthContext';
 
-export default function Topbar({ title }) {
+export default function Topbar({ title, onMenuClick }) {
   const { user } = useAuth();
+  const today = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date());
 
   return (
-    <header className="sticky top-0 z-10 bg-paper/80 backdrop-blur-sm">
-      <div className="flex h-16 items-center justify-between gap-4 px-6">
-        <div>
-          <h1 className="font-display text-xl font-semibold text-ink">{title}</h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/30" size={16} />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="h-9 w-64 rounded-lg border border-border bg-white pl-9 pr-3 text-sm placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
-            />
+    <header className="sticky top-0 z-20 border-b border-border/80 bg-white/90 backdrop-blur-xl">
+      <div className="flex min-h-[76px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <button aria-label="Open navigation" onClick={onMenuClick} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-ink/70 hover:bg-paper lg:hidden"><Menu size={19} /></button>
+          <div className="min-w-0">
+            <p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-brand">{roleLabels[user?.role]} portal</p>
+            <h1 className="truncate text-lg font-bold leading-tight tracking-tight text-ink sm:text-xl">{title}</h1>
           </div>
-          <button className="relative rounded-lg p-2 text-ink/60 hover:bg-white hover:text-ink transition-colors">
-            <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-accent" />
-          </button>
-          <div className="hidden sm:flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-stable" />
-            <span className="text-xs font-medium text-ink/70">{roleLabels[user?.role]}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+          <div className="hidden items-center gap-2 text-xs font-medium text-ink/50 sm:flex"><CalendarDays size={15} className="text-brand" />{today}</div>
+          <div className="flex items-center gap-2 border-l border-border pl-3 sm:pl-5">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-brand-light text-sm font-bold text-brand-dark ring-2 ring-white">
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+            <span className="hidden max-w-36 truncate text-sm font-semibold text-ink sm:block">{user?.name}</span>
           </div>
         </div>
       </div>
-      <EcgDivider />
     </header>
   );
 }

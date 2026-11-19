@@ -93,11 +93,24 @@ const getDoctorDashboard = asyncHandler(async (req, res) => {
   const todayStart = new Date(new Date().setUTCHours(0, 0, 0, 0));
   const todayEnd = new Date(new Date().setUTCHours(23, 59, 59, 999));
 
-  const [todayAppointments, totalPatients, pendingAppointments, completedToday] = await Promise.all([
+  const [todayAppointments, upcomingAppointments, patientIds, pendingAppointments, completedToday] = await Promise.all([
     Appointment.find({ doctor: doctor._id, date: { $gte: todayStart, $lte: todayEnd } })
       .populate({ path: 'patient', populate: { path: 'user', select: 'name avatar' } })
       .sort('startTime'),
-    Patient.countDocuments({ assignedDoctor: doctor._id }),
+    Appointment.find({
+      doctor: doctor._id,
+      date: { $gt: todayEnd },
+      status: { $nin: [APPOINTMENT_STATUS.CANCELLED, APPOINTMENT_STATUS.NO_SHOW] },
+    })
+      .populate({ path: 'patient', populate: { path: 'user', select: 'name avatar' } })
+      .sort('date startTime')
+      .limit(5),
+    Appointment.distinct('patient', {
+      doctor: doctor._id,
+      status: {
+        $in: [APPOINTMENT_STATUS.CONFIRMED, APPOINTMENT_STATUS.IN_PROGRESS, APPOINTMENT_STATUS.COMPLETED],
+      },
+    }),
     Appointment.countDocuments({ doctor: doctor._id, status: APPOINTMENT_STATUS.PENDING }),
     Appointment.countDocuments({
       doctor: doctor._id,
@@ -108,7 +121,7 @@ const getDoctorDashboard = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: { todayAppointments, totalPatients, pendingAppointments, completedToday },
+      data: { todayAppointments, upcomingAppointments, totalPatients: patientIds.length, pendingAppointments, completedToday },
   });
 });
 

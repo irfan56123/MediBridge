@@ -8,12 +8,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { PageLoader } from '@/components/common/Loading';
 
 const STATUS_COLORS = {
-  pending: '#D9A404',
-  confirmed: '#146C6A',
-  in_progress: '#146C6A',
-  completed: '#2E8B57',
-  cancelled: '#C13B3B',
-  no_show: '#C13B3B',
+  pending: '#a8740a',
+  confirmed: '#087e8b',
+  in_progress: '#087e8b',
+  completed: '#21805b',
+  cancelled: '#bd4545',
+  no_show: '#bd4545',
 };
 
 export default function AdminDashboard() {
@@ -76,15 +76,15 @@ export default function AdminDashboard() {
               <AreaChart data={trendData}>
                 <defs>
                   <linearGradient id="colorAppt" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#146C6A" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#146C6A" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#087e8b" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#087e8b" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8E7" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#0B2E33aa' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#0B2E33aa' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #E2E8E7', fontSize: 13 }} />
-                <Area type="monotone" dataKey="appointments" stroke="#146C6A" strokeWidth={2} fill="url(#colorAppt)" />
+                <CartesianGrid strokeDasharray="3 5" stroke="#e3eaf0" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid #e3eaf0', boxShadow: '0 8px 24px #172b3a12', fontSize: 12 }} />
+                <Area type="monotone" dataKey="appointments" stroke="#087e8b" strokeWidth={2.5} fill="url(#colorAppt)" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #E2E8E7', fontSize: 13 }} />
+                <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid #e3eaf0', boxShadow: '0 8px 24px #172b3a12', fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
             <div className="mt-2 space-y-1.5">

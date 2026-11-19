@@ -9,9 +9,14 @@ const getDoctors = asyncHandler(async (req, res) => {
   const filter = {};
   if (req.query.department) filter.department = req.query.department;
   if (req.query.specialization) filter.specialization = { $regex: req.query.specialization, $options: 'i' };
+  if (req.user.role !== 'admin') {
+    const activeDoctorIds = await User.find({ role: 'doctor', isActive: true }).distinct('_id');
+    filter.user = { $in: activeDoctorIds };
+  }
+  if (req.user.role === 'patient') filter.isAvailableForBooking = true;
 
   const doctors = await Doctor.find(filter)
-    .populate('user', 'name email phone avatar isActive')
+    .populate('user', 'name email phone avatar gender dateOfBirth isActive')
     .populate('department', 'name');
 
   res.json({ success: true, count: doctors.length, data: doctors });
@@ -77,8 +82,25 @@ const updateAvailability = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error('You can only update your own availability');
   }
-  doctor.availability = req.body.availability;
-  if (req.body.slotDurationMinutes) doctor.slotDurationMinutes = req.body.slotDurationMinutes;
+  if (Array.isArray(req.body.availability)) doctor.availability = req.body.availability;
+  if (Array.isArray(req.body.dateAvailability)) {
+    for (const entry of req.body.dateAvailability) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date) || !entry.startTime || !entry.endTime || entry.startTime >= entry.endTime) {
+        res.status(400);
+        throw new Error('Please provide valid availability dates and times');
+      }
+    }
+    doctor.dateAvailability = req.body.dateAvailability;
+    doctor.dateAvailabilityConfigured = true;
+  }
+  if (req.body.slotDurationMinutes !== undefined) {
+    const duration = Number(req.body.slotDurationMinutes);
+    if (!Number.isInteger(duration) || duration < 5 || duration > 240) {
+      res.status(400);
+      throw new Error('Slot duration must be between 5 and 240 minutes');
+    }
+    doctor.slotDurationMinutes = duration;
+  }
   await doctor.save();
   res.json({ success: true, data: doctor });
 });

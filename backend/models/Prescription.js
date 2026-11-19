@@ -51,8 +51,8 @@ const prescriptionSchema = new mongoose.Schema(
     notes: String,
     status: {
       type: String,
-      enum: ['pending', 'partially_dispensed', 'dispensed', 'cancelled'],
-      default: 'pending',
+      enum: ['pending', 'approved', 'partially_dispensed', 'dispensed', 'cancelled'],
+      default: 'approved',
     },
     dispensedBy: {
       type: mongoose.Schema.Types.ObjectId,

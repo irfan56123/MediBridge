@@ -1,8 +1,28 @@
 const asyncHandler = require('express-async-handler');
+const crypto = require('crypto');
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
+const User = require('../models/User');
 const { APPOINTMENT_STATUS } = require('../utils/constants');
+
+const getOrCreatePatientProfile = async (user) => {
+  let patient = await Patient.findOne({ user: user._id });
+  if (patient) return patient;
+
+  try {
+    patient = await Patient.create({ user: user._id });
+  } catch (error) {
+    // A parallel request may have created the unique profile first.
+    if (error.code !== 11000) throw error;
+    patient = await Patient.findOne({ user: user._id });
+  }
+  if (patient && String(user.profileRef || '') !== String(patient._id)) {
+    user.profileRef = patient._id;
+    await user.save({ validateBeforeSave: false });
+  }
+  return patient;
+};
 
 // Helper: convert "HH:MM" to minutes since midnight
 const toMinutes = (t) => {
@@ -28,13 +48,17 @@ const getAvailableSlots = asyncHandler(async (req, res) => {
   }
 
   const doctor = await Doctor.findById(doctorId);
-  if (!doctor) {
+  const doctorUser = doctor ? await User.findById(doctor.user).select('isActive') : null;
+  if (!doctor || !doctorUser?.isActive || !doctor.isAvailableForBooking) {
     res.status(404);
-    throw new Error('Doctor not found');
+    throw new Error('This doctor is not currently accepting appointments');
   }
 
-  const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-  const daySchedule = doctor.availability.filter((slot) => slot.day === dayName);
+  const dateOverride = doctor.dateAvailability.find((entry) => entry.date === date);
+  const dayName = new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  const daySchedule = doctor.dateAvailabilityConfigured
+    ? (dateOverride?.available ? [{ startTime: dateOverride.startTime, endTime: dateOverride.endTime }] : [])
+    : doctor.availability.filter((slot) => slot.day === dayName);
 
   if (daySchedule.length === 0) {
     return res.json({ success: true, data: [] });
@@ -82,7 +106,7 @@ const createAppointment = asyncHandler(async (req, res) => {
   // Resolve patient: if a patient is booking for themselves, look up their own profile
   let patient;
   if (req.user.role === 'patient') {
-    patient = await Patient.findOne({ user: req.user._id });
+    patient = await getOrCreatePatientProfile(req.user);
   } else {
     patient = await Patient.findById(patientId);
   }
@@ -95,6 +119,29 @@ const createAppointment = asyncHandler(async (req, res) => {
   if (!doctor) {
     res.status(404);
     throw new Error('Doctor not found');
+  }
+  const doctorUser = await User.findById(doctor.user).select('isActive');
+  if (!doctorUser?.isActive || !doctor.isAvailableForBooking) {
+    res.status(400);
+    throw new Error('This doctor is not currently accepting appointments');
+  }
+
+  const dateOverride = doctor.dateAvailability.find((entry) => entry.date === date);
+  const dayName = new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  const schedule = doctor.dateAvailabilityConfigured
+    ? (dateOverride?.available ? [{ startTime: dateOverride.startTime, endTime: dateOverride.endTime }] : [])
+    : doctor.availability.filter((slot) => slot.day === dayName);
+  const duration = doctor.slotDurationMinutes || 30;
+  const validSlot = schedule.some((block) => {
+    const start = toMinutes(startTime);
+    const end = toMinutes(endTime);
+    const blockStart = toMinutes(block.startTime);
+    const blockEnd = toMinutes(block.endTime);
+    return start >= blockStart && end <= blockEnd && end - start === duration && (start - blockStart) % duration === 0;
+  });
+  if (!validSlot) {
+    res.status(400);
+    throw new Error('This date or time is not available for appointments');
   }
 
   // Conflict check: is this exact slot already booked for this doctor?
@@ -137,7 +184,7 @@ const getAppointments = asyncHandler(async (req, res) => {
   const filter = {};
 
   if (req.user.role === 'patient') {
-    const patient = await Patient.findOne({ user: req.user._id });
+    const patient = await getOrCreatePatientProfile(req.user);
     filter.patient = patient._id;
   } else if (req.user.role === 'doctor') {
     const doctor = await Doctor.findOne({ user: req.user._id });
@@ -190,7 +237,20 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     throw new Error('Appointment not found');
   }
 
+  if (req.user.role === 'doctor') {
+    const doctor = await Doctor.findOne({ user: req.user._id });
+    if (!doctor || String(appointment.doctor) !== String(doctor._id)) {
+      res.status(403);
+      throw new Error('You can only update appointments assigned to you');
+    }
+  }
+
   appointment.status = status;
+  if (req.user.role === 'doctor' && status === APPOINTMENT_STATUS.CONFIRMED && !appointment.meetingUrl) {
+    const roomId = crypto.randomBytes(16).toString('hex');
+    appointment.meetingUrl = `https://meet.jit.si/MediBridge-${roomId}`;
+    appointment.meetingCreatedAt = new Date();
+  }
   if (notes) appointment.notes = notes;
   if (status === APPOINTMENT_STATUS.IN_PROGRESS) appointment.checkedInAt = new Date();
   if (status === APPOINTMENT_STATUS.COMPLETED) appointment.completedAt = new Date();
