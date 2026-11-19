@@ -53,6 +53,20 @@ const getLabTestById = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Lab test not found');
   }
+  if (req.user.role === 'patient') {
+    const patient = await Patient.findOne({ user: req.user._id });
+    if (!patient || String(labTest.patient._id || labTest.patient) !== String(patient._id)) {
+      res.status(403);
+      throw new Error('You can only view your own lab reports');
+    }
+  }
+  if (req.user.role === 'doctor') {
+    const doctor = await Doctor.findOne({ user: req.user._id });
+    if (!doctor || String(labTest.requestedBy._id || labTest.requestedBy) !== String(doctor._id)) {
+      res.status(403);
+      throw new Error('You can only view lab reports you requested');
+    }
+  }
   res.json({ success: true, data: labTest });
 });
 
@@ -64,6 +78,11 @@ const updateLabTestStatus = asyncHandler(async (req, res) => {
   if (!labTest) {
     res.status(404);
     throw new Error('Lab test not found');
+  }
+  const allowedStatuses = [LAB_TEST_STATUS.REQUESTED, LAB_TEST_STATUS.SAMPLE_COLLECTED, LAB_TEST_STATUS.IN_PROGRESS];
+  if (!allowedStatuses.includes(req.body.status)) {
+    res.status(400);
+    throw new Error('Use result submission to mark a lab test as completed');
   }
   labTest.status = req.body.status;
   if (req.body.status === LAB_TEST_STATUS.SAMPLE_COLLECTED) labTest.sampleCollectedAt = new Date();

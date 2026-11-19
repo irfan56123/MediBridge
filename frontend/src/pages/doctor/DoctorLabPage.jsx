@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { ExternalLink, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { labApi, patientApi } from '@/api/services';
 import { usePageTitle } from '@/context/PageTitleContext';
@@ -19,6 +19,7 @@ export default function DoctorLabPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ patient: '', testName: '', testType: '', priority: 'routine' });
+  const [selected, setSelected] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -60,8 +61,10 @@ export default function DoctorLabPage() {
               { key: 'testName', label: 'Test' },
               { key: 'priority', label: 'Priority', render: (t) => <Badge variant={t.priority === 'emergency' ? 'critical' : t.priority === 'urgent' ? 'caution' : 'neutral'}>{t.priority}</Badge> },
               { key: 'status', label: 'Status', render: (t) => <Badge status={t.status} /> },
+              { key: 'report', label: '', render: (t) => t.status === 'completed' && <button className="text-xs font-semibold text-brand hover:underline" onClick={(event) => { event.stopPropagation(); setSelected(t); }}>View result</button> },
               { key: 'date', label: 'Requested', render: (t) => format(new Date(t.createdAt), 'MMM d, yyyy') },
             ]}
+            onRowClick={(t) => t.status === 'completed' && setSelected(t)}
           />
         </CardContent>
       </Card>
@@ -89,6 +92,14 @@ export default function DoctorLabPage() {
           </FormField>
           <Button type="submit" className="w-full" loading={saving}>Submit Request</Button>
         </form>
+      </Modal>
+
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.testName}>
+        {selected && <div className="space-y-3">
+          {selected.results?.length > 0 ? <table className="w-full text-sm"><thead><tr className="text-left text-xs text-ink/50"><th className="pb-2">Parameter</th><th className="pb-2">Value</th><th className="pb-2">Range</th></tr></thead><tbody className="divide-y divide-border">{selected.results.map((result, index) => <tr key={index}><td className="py-2">{result.parameter}</td><td className="py-2 font-medium">{result.value} {result.unit}</td><td className="py-2 text-ink/50">{result.normalRange}</td></tr>)}</tbody></table> : <p className="text-sm text-ink/50">No detailed parameters recorded.</p>}
+          {selected.remarks && <p className="text-sm text-ink/60">{selected.remarks}</p>}
+          {selected.resultFileUrl && <a href={selected.resultFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"><ExternalLink size={15} /> Open report copy</a>}
+        </div>}
       </Modal>
     </div>
   );

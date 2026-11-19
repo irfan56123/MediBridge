@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import { Input, FormField, Textarea } from '@/components/ui/Input';
+import { Input, FormField, Select, Textarea } from '@/components/ui/Input';
 import DataTable from '@/components/common/DataTable';
 import { format } from 'date-fns';
 
@@ -19,6 +19,7 @@ export default function LabTestsPage() {
   const [resultModal, setResultModal] = useState(null);
   const [results, setResults] = useState([{ ...emptyResult }]);
   const [remarks, setRemarks] = useState('');
+  const [reportUrl, setReportUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   const load = () => {
@@ -41,13 +42,25 @@ export default function LabTestsPage() {
     setResultModal(test);
     setResults([{ ...emptyResult }]);
     setRemarks('');
+    setReportUrl(test.resultFileUrl || '');
+  };
+
+  const changeStatus = async (test, status) => {
+    if (status === 'completed') return openResults(test);
+    try {
+      await labApi.updateStatus(test._id, status);
+      toast.success('Test status updated');
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update status');
+    }
   };
 
   const submitResults = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await labApi.submitResults(resultModal._id, { results, remarks });
+      await labApi.submitResults(resultModal._id, { results, remarks, resultFileUrl: reportUrl });
       toast.success('Results submitted');
       setResultModal(null);
       load();
@@ -74,6 +87,12 @@ export default function LabTestsPage() {
               { key: 'date', label: 'Date', render: (t) => format(new Date(t.createdAt), 'MMM d, yyyy') },
               { key: 'actions', label: '', render: (t) => (
                 <div className="flex gap-2">
+                  {t.status !== 'completed' && <Select value={t.status} onChange={(event) => changeStatus(t, event.target.value)} className="min-w-36 text-xs">
+                    <option value="requested">Requested</option>
+                    <option value="sample_collected">Sample collected</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="completed">Complete with results</option>
+                  </Select>}
                   {t.status === 'requested' && <Button size="sm" variant="outline" onClick={() => collectSample(t._id)}>Collect Sample</Button>}
                   {['sample_collected', 'in_progress'].includes(t.status) && <Button size="sm" onClick={() => openResults(t)}>Enter Results</Button>}
                 </div>
@@ -98,6 +117,9 @@ export default function LabTestsPage() {
           </button>
           <FormField label="Remarks">
             <Textarea rows={2} value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+          </FormField>
+          <FormField label="Report copy link (optional)">
+            <Input type="url" placeholder="https://.../report.pdf" value={reportUrl} onChange={(e) => setReportUrl(e.target.value)} />
           </FormField>
           <Button type="submit" className="w-full" loading={saving}>Submit Results</Button>
         </form>

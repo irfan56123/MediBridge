@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 import { labApi } from '@/api/services';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -51,6 +52,7 @@ export default function PatientLabPage() {
               </table>
             ) : <p className="text-sm text-ink/50">No detailed parameters recorded.</p>}
             {selected.remarks && <p className="text-sm text-ink/60 mt-2">{selected.remarks}</p>}
+            {selected.resultFileUrl && <a href={selected.resultFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"><ExternalLink size={15} /> Open report copy</a>}
           </div>
         )}
       </Modal>

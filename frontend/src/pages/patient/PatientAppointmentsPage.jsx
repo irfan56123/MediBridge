@@ -25,6 +25,10 @@ export default function PatientAppointmentsPage() {
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const selectedDoctor = doctors.find((doctor) => doctor._id === form.doctorId);
+  const availableDates = (selectedDoctor?.dateAvailability || [])
+    .filter((entry) => entry.available && entry.date >= format(new Date(), 'yyyy-MM-dd'))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   const load = () => {
     setLoading(true);
@@ -46,8 +50,17 @@ export default function PatientAppointmentsPage() {
     if (form.doctorId && form.date) {
       setLoadingSlots(true);
       setSelectedSlot(null);
-      appointmentApi.getAvailableSlots(form.doctorId, form.date).then((res) => { setSlots(res.data.data); setLoadingSlots(false); });
-    } else setSlots([]);
+      appointmentApi.getAvailableSlots(form.doctorId, form.date)
+        .then((res) => setSlots(res.data.data))
+        .catch((err) => {
+          setSlots([]);
+          toast.error(err.response?.data?.message || 'Could not load available slots');
+        })
+        .finally(() => setLoadingSlots(false));
+    } else {
+      setSlots([]);
+      setSelectedSlot(null);
+    }
   }, [form.doctorId, form.date]);
 
   const submit = async (e) => {
@@ -108,14 +121,23 @@ export default function PatientAppointmentsPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Book Appointment" size="lg">
         <form onSubmit={submit} className="space-y-4">
           <FormField label="Doctor">
-            <Select required value={form.doctorId} onChange={(e) => setForm({ ...form, doctorId: e.target.value })}>
+            <Select required value={form.doctorId} onChange={(e) => setForm({ ...form, doctorId: e.target.value, date: '' })}>
               <option value="">Select doctor</option>
               {doctors.map((d) => <option key={d._id} value={d._id}>Dr. {d.user?.name} — {d.specialization}</option>)}
             </Select>
           </FormField>
-          <FormField label="Date">
-            <Input type="date" required min={format(new Date(), 'yyyy-MM-dd')} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-          </FormField>
+          {selectedDoctor?.dateAvailabilityConfigured ? (
+            <FormField label="Available date">
+              <Select required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} disabled={!availableDates.length}>
+                <option value="">{availableDates.length ? 'Select an available date' : 'Doctor has no available dates'}</option>
+                {availableDates.map((entry) => <option key={entry.date} value={entry.date}>{format(new Date(`${entry.date}T12:00:00`), 'EEE, MMM d, yyyy')} ({entry.startTime}–{entry.endTime})</option>)}
+              </Select>
+            </FormField>
+          ) : (
+            <FormField label="Date">
+              <Input type="date" required min={format(new Date(), 'yyyy-MM-dd')} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            </FormField>
+          )}
 
           {form.doctorId && form.date && (
             <div>
